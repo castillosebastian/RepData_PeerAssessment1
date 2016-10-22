@@ -1,0 +1,130 @@
+---
+title: "Peer assessment 1 (Reproducible Research)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = 'hold')
+```
+
+## Loading and preprocessing the data
+
+Show any code that is needed to Load the data (i.e. read.csv())
+Process/transform the data (if necessary) into a format suitable for your analysis
+
+```{r}
+library(ggplot2)
+library(dplyr)
+setwd("~/R")
+activity <- read.csv("activity.csv", stringsAsFactors = F)
+str(activity)
+```
+
+## What is mean total number of steps taken per day?
+
+Calculate the total number of steps taken per day.
+Make a histogram of the total number of steps taken each day.
+Calculate and report the mean and median of the total number of steps taken per day.
+
+```{r}
+
+complete_days_only <- activity[complete.cases(activity), ]
+step_summary  <-  complete_days_only %>% 
+                  group_by(date) %>% 
+                  summarise(daily_step_count = sum(steps))
+head(step_summary)
+
+hist(step_summary$daily_step_count, 
+    main = "Histogram total steps per day",
+    xlab = "Range of step totals",
+    ylab = "Number of totals in range",
+    col = heat.colors(5),
+    las = 1,
+    ylim = c(0, 30))
+
+``` 
+
+## What is the average daily activity pattern?
+
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis). Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+x  <- complete_days_only %>% 
+      group_by(interval) %>% 
+      summarise(avg_interval = mean(steps))
+head(x)
+
+plot(x$interval, 
+     x$avg_interval, 
+     type = "l", 
+     las = 1, 
+     col = "blue", 
+     main = "Average Steps within Intervals",
+     col.main = "black",
+     font.main = 4,
+     xlab = "Daily Intervals",
+     ylab = "Step Averages"
+     )
+
+x[which.max(x$avg_interval), ]
+```
+
+##Imputing missing values 
+
+Devise a strategy for filling in all of the missing values in the dataset. 
+Create a new dataset that is equal to the original dataset but with the missing data filled in.
+Make a histogram 
+
+```{r}
+nrow(activity)
+nrow(complete_days_only)
+
+z  <- floor(runif(nrow(activity), 
+                  min = min(activity$steps, na.rm = T), 
+                  max = max(activity$steps, na.rm = T)/10))
+
+w  <- which(is.na(activity$steps))
+
+activity$steps[w]  <- z[w]
+
+
+complete_data  <- activity %>% 
+                  group_by(date) %>% 
+                  summarise(daily_step_count = sum(steps))
+
+hist(complete_data$daily_step_count, 
+    breaks = 10,
+    main = "Histogram of total steps per day",
+    xlab = "Range of step totals",
+    ylab = "Number of totals in range",
+    col = heat.colors(12),
+    las = 1,
+    ylim = c(0, 25))
+
+```
+
+## Differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+In this part I create new variables weekday and DayType to find if weekend or wekday.
+The I do the plots. 
+
+
+```{r}
+activity$RealDate <- as.Date(activity$date, format = "%Y-%m-%d")
+activity$weekday <- weekdays(activity$RealDate)
+head(activity)
+table(activity$weekday)
+activity$DayType <- ifelse(activity$weekday=='sábado' | activity$weekday=='domingo', 'weekend','weekday')
+table(activity$DayType)
+str(activity)
+
+activity$DayType  <- as.factor(activity$DayType)
+
+StepsPerTimeDT <- aggregate(steps~interval+DayType,data=activity,FUN=mean,na.action=na.omit)
+StepsPerTimeDT$time <- StepsPerTimeDT$interval/100
+
+j <- ggplot(StepsPerTimeDT, aes(time, steps))
+j+geom_line(col="darkred")+ggtitle("Average steps per time interval: weekdays vs. weekends")+xlab("Time")+ylab("Steps")+theme(plot.title = element_text(face="bold", size=12))+facet_grid(DayType ~ .)
+
+```
