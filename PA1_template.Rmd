@@ -9,79 +9,71 @@ knitr::opts_chunk$set(echo = TRUE, results = 'hold')
 
 ## Loading and preprocessing the data
 
-Show any code that is needed to Load the data (i.e. read.csv())
-Process/transform the data (if necessary) into a format suitable for your analysis
-
-```{r}
+```{r loaddata}
 library(ggplot2)
-library(dplyr)
-setwd("~/R/RepData_PeerAssessment1-master")
-list.files()
-activity <- read.csv("activity.csv", stringsAsFactors = F)
-str(activity)
+data <- read.csv("activity.csv")
 ```
 
 ## What is mean total number of steps taken per day?
 
-Calculate the total number of steps taken per day.
-Make a histogram of the total number of steps taken each day.
-Mean and median of the total number of steps taken per day.
-
 ```{r}
-total.steps <- tapply(activity$steps, activity$date, FUN = sum, na.rm = TRUE)
-qplot(total.steps, binwidth = 1000, xlab = "total number of steps taken each day")
 
-step_mean <- mean(total.steps, na.rm = TRUE)
-step_median <- median(total.steps, na.rm = TRUE)
-step_mean
-step_median
-``` 
-
-## What is the average daily activity pattern?
-
-Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis). Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
-
-```{r}
-  averages <- aggregate(x=list(steps=activity$steps),
-                        by=list(interval=activity$interval), 
-                        FUN=mean, na.rm = TRUE)
-  ggplot(data = averages, aes(x = interval, y = steps)) + geom_line() + xlab("5_minute_interval") + 
-      ylab("average number of steps taken")
-  
-averages[which.max(averages$steps), ]
+totalstep <- tapply(data$steps, data$date, FUN=sum, na.rm=TRUE)
+qplot(totalstep, binwidth=1000, xlab="steps taken each day")
+mean(totalstep, na.rm=TRUE)
+median(totalstep, na.rm=TRUE)
 ```
 
-##Imputing missing values 
-
-Devise a strategy for filling in all of the missing values in the dataset. 
-Create a new dataset that is equal to the original dataset but with the missing data filled in.
-Make a histogram 
+## Average daily activity pattern
 
 ```{r}
-str(activity)
-fill <- function(steps, interval) {
+averages <- aggregate(x=list(steps=data$steps), by=list(interval=data$interval),
+                      FUN=mean, na.rm=TRUE)
+ggplot(data=averages, aes(x=interval, y=steps)) +
+    geom_line() +
+    xlab("5-minute interval") +
+    ylab("average number of steps taken")
+```
+
+On average across all the days in the dataset, the 5-minute interval contains
+the maximum number of steps?
+
+```{r}
+averages[which.max(averages$steps),]
+```
+
+## Imputing missing values
+
+```{r how_many_missing}
+missing <- is.na(data$steps)
+table(missing)
+```
+
+Fill the missing values with the mean valu.
+
+```{r}
+fill.value <- function(steps, interval) {
     filled <- NA
-    if (!is.na(steps)) 
-        filled <- c(steps) else filled <- (averages[averages$interval == interval, "steps"])
+    if (!is.na(steps))
+        filled <- c(steps)
+    else
+        filled <- (averages[averages$interval==interval, "steps"])
     return(filled)
 }
-filled.data <- activity
-filled.data$steps <- mapply(fill, filled.data$steps, filled.data$interval)
-
-total.steps <- tapply(filled.data$steps, filled.data$date, FUN = sum)
-qplot(total.steps, binwidth = 1000, xlab = "total number of steps taken each day")
-
-mean(total.steps)
-median(total.steps)
-
+filled.data <- data
+filled.data$steps <- mapply(fill.value, filled.data$steps, filled.data$interval)
 ```
 
-## Differences in activity patterns between weekdays and weekends?
+Histogram of the total number of steps taken each day and calculate the mean and median total number of steps.
 
-For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
-In this part I create new variables weekday and DayType to find if weekend or wekday.
-The I do the plots. 
+```{r}
+totalstep <- tapply(filled.data$steps, filled.data$date, FUN=sum)
+qplot(totalstep, binwidth=1000, xlab="total number of steps taken each day")
+mean(totalstep)
+median(totalstep)
+```
 
+## Are there differences in activity patterns between weekdays and weekends?
 
 ```{r}
 weekday.or.weekend <- function(date) {
@@ -97,8 +89,4 @@ filled.data$day <- sapply(filled.data$date, FUN = weekday.or.weekend)
 averages <- aggregate(steps ~ interval + day, data = filled.data, mean)
 ggplot(averages, aes(interval, steps)) + geom_line() + facet_grid(day ~ .) + 
     xlab("5-minute interval") + ylab("Number of steps")
-
-head(filled.data)
-table(filled.data$day)
-
 ```
