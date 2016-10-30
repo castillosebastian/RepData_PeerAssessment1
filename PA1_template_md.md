@@ -9,8 +9,8 @@ What is mean total number of steps taken per day?
 
     totalstep <- tapply(data$steps, data$date, FUN=sum, na.rm=TRUE)
     qplot(totalstep, binwidth=1000, xlab="steps taken each day")
-
-![](PA1_template_md_files/figure-markdown_strict/unnamed-chunk-1-1.png)
+    
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1.png) 
 
     mean(totalstep, na.rm=TRUE)
     median(totalstep, na.rm=TRUE)
@@ -18,7 +18,7 @@ What is mean total number of steps taken per day?
     ## [1] 9354.23
     ## [1] 10395
 
-Average daily activity pattern
+## Average daily activity pattern
 ------------------------------
 
     averages <- aggregate(x=list(steps=data$steps), by=list(interval=data$interval),
@@ -28,7 +28,7 @@ Average daily activity pattern
         xlab("5-minute interval") +
         ylab("average number of steps taken")
 
-![](PA1_template_md_files/figure-markdown_strict/unnamed-chunk-2-1.png)
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
 
 On average across all the days in the dataset, the 5-minute interval
 contains the maximum number of steps?
@@ -67,7 +67,7 @@ mean and median total number of steps.
     totalstep <- tapply(filled.data$steps, filled.data$date, FUN=sum)
     qplot(totalstep, binwidth=1000, xlab="total number of steps taken each day")
 
-![](PA1_template_md_files/figure-markdown_strict/unnamed-chunk-5-1.png)
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
 
     mean(totalstep)
     median(totalstep)
@@ -92,4 +92,5 @@ Are there differences in activity patterns between weekdays and weekends?
     ggplot(averages, aes(interval, steps)) + geom_line() + facet_grid(day ~ .) + 
         xlab("5-minute interval") + ylab("Number of steps")
 
-![](PA1_template_md_files/figure-markdown_strict/unnamed-chunk-6-1.png)
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
+
